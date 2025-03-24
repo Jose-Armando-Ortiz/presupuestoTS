@@ -1,25 +1,25 @@
-interface VehiculoDatos {
-  id?: number; // ID opcional (para cuando se recibe desde la API)
-  vehiculoModelo: string; // Modelo del vehículo
-  totalChaperia: string; // Total de chapería
-  totalPintura: string; // Total de pintura
-}
-export interface VehiculoDatosTabla {
-  id: number; // ID opcional (para cuando se recibe desde la API)
-  vehiculoModelo: string; // Modelo del vehículo
-  totalChaperia: string; // Total de chapería
-  totalPintura: string; // Total de pintura
-}
-export default VehiculoDatos;
+// Define la URL base de la API
 export const Api = "http://localhost:8085/api/vehiculos";
 
-// Definimos las propiedades que recibirá nuestro componente modal
-export
-interface VehiculoModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSaveSuccess: (data: any) => void;
-  vehiculoData?: VehiculoDatos; // Datos del vehículo a editar (opcional)
-  isEditing?: boolean; // Indica si estamos editando o creando
+// Define la estructura de datos para los vehículos
+export interface VehiculoDatos {
+  id?: number;
+  vehiculoModelo: string;
+  totalChaperia: string | number;
+  totalPintura: string | number;
+  total:string| number;
 }
 
+// Interface para los datos que se muestran en la tabla
+export interface VehiculoDatosTabla extends VehiculoDatos {
+  id: number;
+}
+
+// Props para el modal de vehículos
+export interface VehiculoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSaveSuccess?: (data: any) => void;
+  vehiculoData?: VehiculoDatos;
+  isEditing?: boolean;
+}

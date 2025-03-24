@@ -1,166 +1,54 @@
-// VehiculoModal.tsx
-import VehiculoDatos from "../types/VehiculosType";
-import React, { useState } from "react";
-import axios from "axios"; // Necesitarás instalar axios: npm install axios
-import { VehiculoModalProps, Api } from "../types/VehiculosType";
+import React, { useRef, useEffect } from "react";
+import { useVehiculoContext } from "../context/VehiculosContext";
 
-// Definimos la estructura de datos para el vehículo
-
-// Componente principal del modal
-const VehiculoModal: React.FC<VehiculoModalProps> = ({
-  isOpen,
-  onClose,
-  onSaveSuccess,
-  vehiculoData,
-  isEditing = false,
-  
-}) => {
-  // Estado para almacenar los datos del formulario
-  const [formData, setFormData] = useState<VehiculoDatos>({
-    vehiculoModelo: "",
-    totalChaperia: "",
-    totalPintura: "",
-  });
-  React.useEffect(() => {
-    if (vehiculoData && isEditing) {
-      setFormData(vehiculoData);
-    } else {
-      setFormData({
-        vehiculoModelo: "",
-        totalChaperia: "",
-        totalPintura: "",
-      });
-    }
-  }, [vehiculoData, isEditing, isOpen]);
-  
-
-  // Estado para manejar errores y carga
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Función para manejar cambios en los inputs
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [id]: value,
-    }));
-    // Si había un error, lo limpiamos cuando el usuario empieza a escribir
-    if (error) setError(null);
-  };
-  
-  
-
-  // Función para enviar los datos a la API Modificar e insertar
-  const formRef = React.useRef<HTMLFormElement>(null);
-
-const saveToAPI = async (vehiculoData: VehiculoDatos) => {
-  try {
-    setIsLoading(true);
-    setError(null);
-
-    // Realizamos la petición a la API
-    let response;
-    if (isEditing) {
-      response = await axios.put(`${Api}/${vehiculoData.id}`, vehiculoData);
-    } else {
-      response = await axios.post(Api, vehiculoData);
-    }
-
-    // Si llegamos aquí, la solicitud fue exitosa
-    console.log("Operación exitosa:", response.data);
-
-    // Llamamos al callback con los datos
-    onSaveSuccess(response.data);
-
-    // Limpiamos manualmente los inputs
-    if (formRef.current) {
-      const inputs = formRef.current.querySelectorAll('input');
-      inputs.forEach(input => {
-        input.value = '';
-      });
-    }
-
-    // Forzamos un reseteo del estado también
-    setFormData({
-      vehiculoModelo: "",
-      totalChaperia: "",
-      totalPintura: "",
-    });
-
-    // Cerramos el modal
-    onClose();
-  } catch (err) {
-    // Manejo de errores...
-  } finally {
-    setIsLoading(false);
-  }
-};
-const  resetForm=()=>{
-  setFormData({
-    vehiculoModelo: "",
-    totalChaperia: "",
-    totalPintura: "",
-  });
+interface VehiculoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
+const VehiculoModal: React.FC<VehiculoModalProps> = ({ isOpen, onClose }) => {
+  // Usamos el contexto
+  const {
+    formData,
+    handleChange,
+    error,
+    isLoading,
+    saveVehiculo,
+    isEditing
+  } = useVehiculoContext();
 
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Función para manejar el envío del formulario
-  const handleSubmit = (e: React.FormEvent) => {
+  // Manejador del envío del formulario
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validación básica
-    if (!formData.vehiculoModelo || typeof formData.vehiculoModelo === 'string' && !formData.vehiculoModelo.trim()) {
-      setError("El modelo del vehículo es obligatorio");
-      return;
-    }
-    
-    // Validación para totalChaperia podría ser string o número
-    if (
-      formData.totalChaperia === undefined || 
-      formData.totalChaperia === null || 
-      (typeof formData.totalChaperia === 'string' && !formData.totalChaperia.trim())
-    ) {
-      setError("El total de chapería es obligatorio");
-      return;
-    }
-    
-    // Validación para totalPintura podría ser string o número
-    if (
-      formData.totalPintura === undefined || 
-      formData.totalPintura === null || 
-      (typeof formData.totalPintura === 'string' && !formData.totalPintura.trim())
-    ) {
-      setError("El total de pintura es obligatorio");
-      return;
-    }
-    
-    // Llamamos a la función que se comunica con la API
-    saveToAPI(formData);
+    await saveVehiculo();
   };
+
   // Si el modal no está abierto, no renderizamos nada
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-transparent bg-opacity-100 flex justify-center items-center z-50"
+      className="fixed inset-0 bg-cyan-950 flex justify-center items-center z-50"
       onClick={onClose}
     >
-      {/* Detenemos la propagación del click para evitar que el modal se cierre cuando se hace clic dentro de él */}
       <div
         className="bg-cyan-700 text-white rounded-lg p-6 w-full max-w-md shadow-lg relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           className="absolute top-2 right-2 text-white text-xl bg-transparent border-none cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-600"
-          onClick={onClose }
-          onAbort={resetForm}
+          onClick={onClose}
         >
           ×
         </button>
 
-        <form  ref={formRef} onSubmit={handleSubmit}>
+        <h2 className="text-xl font-bold mb-4">
+          {isEditing ? "Editar Vehículo" : "Añadir Nuevo Vehículo"}
+        </h2>
+
+        <form ref={formRef} onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="vehiculoModelo" className="block mb-1 text-base">
               Modelo del vehículo
@@ -222,7 +110,6 @@ const  resetForm=()=>{
               disabled={isLoading}
             >
               {isLoading ? "Guardando..." : "Guardar"}
-              
             </button>
           </div>
         </form>
